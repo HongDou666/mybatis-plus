@@ -2,7 +2,7 @@
 
 ## 功能概述
 
-本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）领域模型、数据访问与 REST 接口。用户 CRUD 通过 `UserMapper` 继承 MyBatis-Plus `BaseMapper<User>` 的通用方法完成（如 `insert`、`selectById`、`selectBatchIds`、`updateById`、`deleteById`），业务层由 `IUserService` / `UserServiceImpl`（继承 `ServiceImpl`）封装，对外由 `UserController` 提供 REST 接口（含通用 CRUD 与自定义 SQL：扣减余额、按地址关联查询），统一响应包装为 `common.R`。User 主键使用 MyBatis-Plus 雪花算法（`IdType.ASSIGN_ID`），建表脚本 `user.id` 无 `AUTO_INCREMENT`。练习库名为 `mybatis_plus`。
+本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）领域模型、数据访问与 REST 接口。用户 CRUD 通过 `UserMapper` 继承 MyBatis-Plus `BaseMapper<User>` 的通用方法完成（如 `insert`、`selectById`、`selectBatchIds`、`updateById`、`deleteById`），业务层由 `IUserService` / `UserServiceImpl`（继承 `ServiceImpl`）封装，对外由 `UserController` 提供 REST 接口（含通用 CRUD 与自定义 SQL：扣减余额、按地址关联查询），统一响应包装为 `common.R`。业务异常使用 `ResultCode` + `BizException`，由 `GlobalExceptionHandler` 统一转换为 `R`。User 主键使用 MyBatis-Plus 雪花算法（`IdType.ASSIGN_ID`），建表脚本 `user.id` 无 `AUTO_INCREMENT`。练习库名为 `mybatis_plus`。
 
 `UserMapperTest` 除 BaseMapper CRUD 外，还覆盖 LambdaQueryWrapper / LambdaUpdateWrapper 条件示例（用户名 like + 余额 ge；按用户名更新余额）。另有自定义 SQL 示例：`deductBalance`（XML 扣减 + Wrapper WHERE）、`queryUsersByAddress`（user JOIN address；`city` 为 XML 参数，`u.id` 等由 Wrapper WHERE 注入，注解写法已注释保留）。
 
@@ -33,7 +33,11 @@ mybatis-plus/
 ├── src/main/java/com/zqc/
 │   ├── MybatisPlusApplication.java
 │   ├── common/
-│   │   └── R.java               # 统一响应包装（code / msg / data）
+│   │   ├── R.java               # 统一响应包装（code / msg / data）
+│   │   ├── ResultCode.java      # 业务错误码枚举
+│   │   └── exception/
+│   │       ├── BizException.java            # 业务异常（带 code）
+│   │       └── GlobalExceptionHandler.java  # 全局异常 → R
 │   ├── config/
 │   │   └── OpenApiConfig.java   # Knife4j / OpenAPI3 文档元信息
 │   ├── controller/

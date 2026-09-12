@@ -3,6 +3,8 @@ package com.zqc.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
+import com.zqc.common.ResultCode;
+import com.zqc.common.exception.BizException;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.po.User;
 import com.zqc.domain.vo.UserVO;
@@ -71,28 +73,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
-     * 根据 id 扣减余额：校验参数 → 校验用户存在 → WHERE 带余额保护 → 校验影响行数
+     * 根据 id 扣减余额：校验参数 → 校验用户存在 → WHERE 带余额保护 → 校验影响行数。
+     * 失败时抛 {@link com.zqc.common.exception.BizException}，由全局异常处理器转为 R。
      */
     @Override
     public void deductBalanceById(Long id, int money) {
+        // 1. 参数校验
         if (id == null) {
-            throw new IllegalArgumentException("用户 id 不能为空");
+            throw new BizException(ResultCode.BAD_REQUEST, "用户 id 不能为空");
         }
         if (money <= 0) {
-            throw new IllegalArgumentException("扣减金额必须大于 0");
+            throw new BizException(ResultCode.BAD_REQUEST, "扣减金额必须大于 0");
         }
-        // 先判断用户是否存在，避免与「余额不足」混淆
+        // 2. 用户存在性：与「余额不足」区分开
         User user = getById(id);
         if (user == null) {
-            throw new IllegalArgumentException("用户不存在，id=" + id);
+            throw new BizException(ResultCode.USER_NOT_FOUND, "用户不存在，id=" + id);
         }
-        // balance >= money，防止扣成负数
+        // 3. 余额保护：WHERE id=? AND balance>=money，避免扣成负数
         var wrapper = Wrappers.<User>lambdaQuery()
-                .eq(User::getId, id) // 指定用户 id
-                .ge(User::getBalance, money); // 确保余额足够
+                .eq(User::getId, id)
+                .ge(User::getBalance, money);
         int rows = getBaseMapper().deductBalance(wrapper, money);
+        // 4. 影响行数为 0：余额不足或并发下已不够扣
         if (rows == 0) {
-            throw new IllegalStateException("余额不足，扣减失败，id=" + id + ", money=" + money);
+            throw new BizException(ResultCode.BALANCE_NOT_ENOUGH,
+                    "余额不足，扣减失败，id=" + id + ", money=" + money);
         }
     }
 
