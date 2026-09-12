@@ -7,6 +7,8 @@ import com.zqc.domain.po.User;
 import org.apache.ibatis.annotations.Param;
 // import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 public interface UserMapper extends BaseMapper<User> {
 
     /**
@@ -14,4 +16,9 @@ public interface UserMapper extends BaseMapper<User> {
      */
     // @Update("UPDATE `user` SET balance = balance - #{amount} ${ew.customSqlSegment}")
     int deductBalance(@Param(Constants.WRAPPER) Wrapper<User> wrapper, @Param("amount") int amount);
+
+    /**
+     * 自定义 SQL：按收货地址关联查询用户；WHERE 由 Wrapper 动态拼接（SQL 见 UserMapper.xml）
+     */
+    List<User> queryUsersByAddress(@Param(Constants.WRAPPER) Wrapper<User> wrapper);
 }

@@ -100,4 +100,18 @@ class UserMapperTest {
                 .in(User::getId, ids);
         userMapper.deductBalance(query, 100);
     }
+
+    /**
+     * 自定义 SQL：查询收货地址在北京、且用户 id 在 1/2/4 中的用户
+     */
+    @Test
+    void testQueryUsersByBeijingAddressAndIds() {
+        List<Long> ids = List.of(1L, 2L, 4L);
+        // JOIN 场景用表别名列名，避免 id 歧义
+        var query = Wrappers.<User>query()
+                .in("u.id", ids) // 指定查询条件
+                .eq("a.city", "北京"); // 指定查询条件
+        List<User> users = userMapper.queryUsersByAddress(query);
+        users.forEach(System.out::println);
+    }
 }
