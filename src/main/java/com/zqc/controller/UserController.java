@@ -79,6 +79,17 @@ public class UserController {
     }
 
     /**
+     * 根据 id 扣减余额
+     * PUT /users/{id}/deduction/{money}
+     */
+    @PutMapping("/{id}/deduction/{money}")
+    public R<Void> deductBalanceById(@PathVariable("id") Long id,
+                                     @PathVariable("money") Integer money) {
+        userService.deductBalanceById(id, money);
+        return R.ok();
+    }
+
+    /**
      * 按收货地址城市 + 用户 id 关联查询（自定义 SQL：user JOIN address）
      * GET /users/by-address?city=北京&ids=1,2,4
      */

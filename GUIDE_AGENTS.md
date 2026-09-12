@@ -17,6 +17,7 @@
 | GET | `/users/{id}` | 按 id 查询用户，返回 `R.ok(UserVO)` |
 | GET | `/users?ids=` | 按 id 列表批量查询，返回 `R.ok(List<UserVO>)` |
 | PUT | `/users/balance/deduct?ids=&amount=` | 批量扣减余额（自定义 SQL） |
+| PUT | `/users/{id}/deduction/{money}` | 按单个用户 id 扣减余额（自定义 SQL） |
 | GET | `/users/by-address?city=&ids=` | 按城市+用户 id 关联 address 查询（自定义 SQL） |
 
 ## 关键目录结构

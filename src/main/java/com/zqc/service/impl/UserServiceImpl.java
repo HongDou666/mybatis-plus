@@ -71,6 +71,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
+     * Wrapper 拼 id = ?，复用同一条自定义扣减 SQL
+     */
+    @Override
+    public void deductBalanceById(Long id, int money) {
+        var wrapper = Wrappers.<User>lambdaQuery()
+                .eq(User::getId, id);
+        getBaseMapper().deductBalance(wrapper, money);
+    }
+
+    /**
      * Wrapper 只拼 u.id IN (...)；city 作为 Mapper 参数写在 XML JOIN 条件中
      */
     @Override
