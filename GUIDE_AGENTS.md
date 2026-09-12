@@ -8,6 +8,8 @@
 
 `application.yaml` 中已配置 MyBatis-Plus 常用项：`mapper-locations`、`type-aliases-package`、`map-underscore-to-camel-case`、stdout SQL 日志（`StdOutImpl`）、全局主键策略 `id-type: assign_id`（未启用逻辑删除，User 表暂无 deleted 字段）。
 
+接口文档使用 Knife4j Next（OpenAPI3）Boot4 专用 starter：`com.baizhukui:knife4j-openapi3-boot4-spring-boot-starter`（当前版本 `5.6.1`；`5.7.1` 在当前镜像未能解析）。文档增强页地址：http://localhost:8080/doc.html ；OpenAPI 元信息由 `config/OpenApiConfig.java` 配置。
+
 ## REST 接口（UserController）
 
 | 方法 | 路径 | 说明 |
@@ -25,15 +27,17 @@
 ```
 mybatis-plus/
 ├── GUIDE_AGENTS.md              # 本文件：工程功能与目录说明
-├── pom.xml                      # Maven 配置（Spring Boot + MyBatis-Plus starter）
+├── pom.xml                      # Maven 配置（Spring Boot + MyBatis-Plus + Knife4j Boot4）
 ├── sql/
 │   └── mybatis_plus.sql           # 数据库初始化脚本（库名 mybatis_plus）
 ├── src/main/java/com/zqc/
 │   ├── MybatisPlusApplication.java
 │   ├── common/
 │   │   └── R.java               # 统一响应包装（code / msg / data）
+│   ├── config/
+│   │   └── OpenApiConfig.java   # Knife4j / OpenAPI3 文档元信息
 │   ├── controller/
-│   │   └── UserController.java  # 用户 REST：增删查（单/批量）
+│   │   └── UserController.java  # 用户 REST：增删查（单/批量）+ OpenAPI 注解
 │   ├── domain/                  # po / dto / query / vo（User 实体含 @TableName / @TableId）
 │   ├── mapper/                  # UserMapper extends BaseMapper + deductBalance 自定义 SQL
 │   └── service/
@@ -41,7 +45,7 @@ mybatis-plus/
 │       └── impl/
 │           └── UserServiceImpl.java  # spring.service.impl.ServiceImpl + Hutool BeanUtil
 ├── src/main/resources/
-│   ├── application.yaml
+│   ├── application.yaml         # 含 springdoc / knife4j 文档配置
 │   └── mapper/UserMapper.xml    # deductBalance 自定义 SQL（注解写法已注释）
 └── src/test/java/com/zqc/
     ├── MybatisPlusApplicationTests.java

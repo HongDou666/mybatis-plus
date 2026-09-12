@@ -4,6 +4,9 @@ import com.zqc.common.R;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.vo.UserVO;
 import com.zqc.service.IUserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +19,7 @@ import java.util.List;
  * 1）当前：@RequiredArgsConstructor + final 字段 → 构造器注入（推荐）
  * 2）下方注释：@Autowired 字段注入 → 可取消注释对比（同时需去掉 @RequiredArgsConstructor 与 final）
  */
+@Tag(name = "用户管理", description = "用户增删查、扣减余额、按地址查询")
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -34,6 +38,7 @@ public class UserController {
      * 新增用户：接收 UserFormDTO，委托 Service，统一返回 R
      * POST /users
      */
+    @Operation(summary = "新增用户")
     @PostMapping
     public R<Void> saveUser(@RequestBody UserFormDTO userFormDTO) {
         userService.saveUser(userFormDTO);
@@ -44,8 +49,10 @@ public class UserController {
      * 根据 id 删除用户
      * DELETE /users/{id}
      */
+    @Operation(summary = "根据 id 删除用户")
     @DeleteMapping("/{id}")
-    public R<Void> deleteUser(@PathVariable Long id) {
+    public R<Void> deleteUser(
+            @Parameter(description = "用户 id") @PathVariable Long id) {
         userService.deleteUser(id);
         return R.ok();
     }
@@ -54,8 +61,10 @@ public class UserController {
      * 根据 id 查询用户，返回 UserVO
      * GET /users/{id}
      */
+    @Operation(summary = "根据 id 查询用户")
     @GetMapping("/{id}")
-    public R<UserVO> queryUserById(@PathVariable Long id) {
+    public R<UserVO> queryUserById(
+            @Parameter(description = "用户 id") @PathVariable Long id) {
         return R.ok(userService.queryUserById(id));
     }
 
@@ -63,8 +72,10 @@ public class UserController {
      * 根据 id 列表批量查询用户，例如 /users?ids=1,2,4
      * GET /users?ids=
      */
+    @Operation(summary = "根据 id 列表批量查询用户")
     @GetMapping
-    public R<List<UserVO>> queryUserByIds(@RequestParam List<Long> ids) {
+    public R<List<UserVO>> queryUserByIds(
+            @Parameter(description = "用户 id 列表") @RequestParam List<Long> ids) {
         return R.ok(userService.queryUserByIds(ids));
     }
 
@@ -72,8 +83,11 @@ public class UserController {
      * 批量扣减余额（自定义 SQL）
      * PUT /users/balance/deduct?ids=1,2,4&amount=200
      */
+    @Operation(summary = "批量扣减余额")
     @PutMapping("/balance/deduct")
-    public R<Void> deductBalance(@RequestParam List<Long> ids, @RequestParam int amount) {
+    public R<Void> deductBalance(
+            @Parameter(description = "用户 id 列表") @RequestParam List<Long> ids,
+            @Parameter(description = "扣减金额") @RequestParam int amount) {
         userService.deductBalance(ids, amount);
         return R.ok();
     }
@@ -82,9 +96,11 @@ public class UserController {
      * 根据 id 扣减余额
      * PUT /users/{id}/deduction/{money}
      */
+    @Operation(summary = "根据 id 扣减余额")
     @PutMapping("/{id}/deduction/{money}")
-    public R<Void> deductBalanceById(@PathVariable("id") Long id,
-                                     @PathVariable("money") Integer money) {
+    public R<Void> deductBalanceById(
+            @Parameter(description = "用户 id") @PathVariable("id") Long id,
+            @Parameter(description = "扣减金额") @PathVariable("money") Integer money) {
         userService.deductBalanceById(id, money);
         return R.ok();
     }
@@ -93,9 +109,11 @@ public class UserController {
      * 按收货地址城市 + 用户 id 关联查询（自定义 SQL：user JOIN address）
      * GET /users/by-address?city=北京&ids=1,2,4
      */
+    @Operation(summary = "按收货地址城市 + 用户 id 关联查询")
     @GetMapping("/by-address")
-    public R<List<UserVO>> queryUsersByAddress(@RequestParam List<Long> ids,
-                                               @RequestParam String city) {
+    public R<List<UserVO>> queryUsersByAddress(
+            @Parameter(description = "用户 id 列表") @RequestParam List<Long> ids,
+            @Parameter(description = "收货地址城市") @RequestParam String city) {
         return R.ok(userService.queryUsersByAddress(ids, city));
     }
 }

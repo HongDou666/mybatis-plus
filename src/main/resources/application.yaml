@@ -31,3 +31,30 @@ mybatis-plus:
       id-type: assign_id
       # 更新策略：非空字段才更新（避免默认值被覆盖）
       update-strategy: not_empty
+
+# Knife4j / springdoc 接口文档（浏览器访问：http://localhost:8080/doc.html）
+springdoc:
+  swagger-ui:
+    # 原生 Swagger UI 路径（一般用 Knife4j 的 doc.html 即可）
+    path: /swagger-ui.html
+    # 标签按字母排序
+    tags-sorter: alpha
+    # 接口按字母排序
+    operations-sorter: alpha
+  api-docs:
+    # OpenAPI JSON 地址
+    path: /v3/api-docs
+  group-configs:
+    - group: default
+      # 文档包含的路径范围
+      paths-to-match: /**
+      # 只扫描 Controller 包，避免无关类进文档
+      packages-to-scan: com.zqc.controller
+
+knife4j:
+  # 开启 Knife4j 增强文档（false 则无 doc.html）
+  enable: true
+  setting:
+    # 文档界面语言：中文
+    language: zh_cn
+  # 生产环境可设 production: true 关闭文档页面
