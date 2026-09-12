@@ -89,4 +89,15 @@ class UserMapperTest {
                 .setSql("balance = balance - 200");
         userMapper.update(null, update);
     }
+
+    /**
+     * 自定义 SQL：SET 写在 Mapper，WHERE 仍用 Wrapper 拼装（避免业务层写 setSql）
+     */
+    @Test
+    void testDeductBalanceByIdsCustomSql() {
+        List<Long> ids = List.of(1L, 2L, 4L);
+        var query = Wrappers.<User>lambdaQuery()
+                .in(User::getId, ids);
+        userMapper.deductBalance(query, 100);
+    }
 }
