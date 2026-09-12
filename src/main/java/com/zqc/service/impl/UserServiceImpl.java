@@ -1,16 +1,19 @@
 package com.zqc.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.zqc.common.ResultCode;
 import com.zqc.common.exception.BizException;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.po.User;
+import com.zqc.domain.query.UserQuery;
 import com.zqc.domain.vo.UserVO;
 import com.zqc.mapper.UserMapper;
 import com.zqc.service.IUserService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -73,10 +76,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
-     * 根据 id 扣减余额：校验参数 → 校验用户存在 → WHERE 带余额保护 → 校验影响行数。
+     * 根据 id 扣减余额：
+     * 1）校验用户状态（须正常，冻结不可扣）
+     * 2）校验用户余额（须 >= 扣减金额）
+     * 3）扣减成功后若余额为 0，则将 status 置为 2（冻结）
+     * 使用 IService.lambdaUpdate()，无需自定义 deductBalance SQL。
      * 失败时抛 {@link com.zqc.common.exception.BizException}，由全局异常处理器转为 R。
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deductBalanceById(Long id, int money) {
         // 1. 参数校验
         if (id == null) {
@@ -85,20 +93,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (money <= 0) {
             throw new BizException(ResultCode.BAD_REQUEST, "扣减金额必须大于 0");
         }
-        // 2. 用户存在性：与「余额不足」区分开
+        // 2. 用户存在性
         User user = getById(id);
         if (user == null) {
             throw new BizException(ResultCode.USER_NOT_FOUND, "用户不存在，id=" + id);
         }
-        // 3. 余额保护：WHERE id=? AND balance>=money，避免扣成负数
-        var wrapper = Wrappers.<User>lambdaQuery()
-                .eq(User::getId, id)
-                .ge(User::getBalance, money);
-        int rows = getBaseMapper().deductBalance(wrapper, money);
-        // 4. 影响行数为 0：余额不足或并发下已不够扣
-        if (rows == 0) {
+        // 3. 校验用户状态：status 1 正常，2 冻结；冻结不可扣减
+        if (user.getStatus() == null || !Integer.valueOf(1).equals(user.getStatus())) {
+            throw new BizException(ResultCode.USER_FROZEN, "用户状态异常或已冻结，无法扣减余额，id=" + id);
+        }
+        // 4. 校验用户余额：余额必须足够
+        Integer balance = user.getBalance();
+        if (balance == null || balance < money) {
             throw new BizException(ResultCode.BALANCE_NOT_ENOUGH,
-                    "余额不足，扣减失败，id=" + id + ", money=" + money);
+                    "余额不足，扣减失败，id=" + id + ", balance=" + balance + ", money=" + money);
+        }
+        // 5. Lambda 更新：扣减余额；若扣完为 0 则同一次更新里冻结
+        //    eq(旧余额) 作乐观锁：仅当库中余额仍等于查询时的值才更新，避免并发覆盖
+        int remain = balance - money;
+        boolean success = lambdaUpdate()
+                .set(User::getBalance, remain) // 设置用户余额为剩余金额
+                .set(remain == 0, User::getStatus, 2) // 若扣完为 0 则将用户状态设置为冻结
+                .eq(User::getId, id) // 条件1：用户 id
+                .eq(User::getStatus, 1) // 条件2：用户状态为正常
+                .eq(User::getBalance, balance) // 条件3：用户余额等于查询时的值 乐观锁
+                .update(); // 执行更新
+        if (!success) {
+            throw new BizException(ResultCode.BALANCE_NOT_ENOUGH,
+                    "扣减失败（并发下余额或状态已变更），id=" + id + ", money=" + money);
         }
     }
 
@@ -110,6 +132,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         var query = Wrappers.<User>query()
                 .in("u.id", ids);
         List<User> users = getBaseMapper().queryUsersByAddress(query, city);
+        return BeanUtil.copyToList(users, UserVO.class);
+    }
+
+    /**
+     * 使用 IService.lambdaQuery() 动态拼接条件：第一个布尔参数为 true 时才加入该条件
+     */
+    @Override
+    public List<UserVO> queryUsers(UserQuery query) {
+        if (query == null) {
+            query = new UserQuery();
+        }
+        List<User> users = lambdaQuery()
+                // 用户名关键字：非空才模糊查询
+                .like(StrUtil.isNotBlank(query.getName()), User::getUsername, query.getName())
+                // 状态：非空才等值匹配
+                .eq(query.getStatus() != null, User::getStatus, query.getStatus())
+                // 最小余额
+                .ge(query.getMinBalance() != null, User::getBalance, query.getMinBalance())
+                // 最大余额
+                .le(query.getMaxBalance() != null, User::getBalance, query.getMaxBalance())
+                .list(); // 执行查询
         return BeanUtil.copyToList(users, UserVO.class);
     }
 }

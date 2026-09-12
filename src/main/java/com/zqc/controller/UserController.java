@@ -2,6 +2,7 @@ package com.zqc.controller;
 
 import com.zqc.common.R;
 import com.zqc.domain.dto.UserFormDTO;
+import com.zqc.domain.query.UserQuery;
 import com.zqc.domain.vo.UserVO;
 import com.zqc.service.IUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -115,5 +116,15 @@ public class UserController {
             @Parameter(description = "用户 id 列表") @RequestParam List<Long> ids,
             @Parameter(description = "收货地址城市") @RequestParam String city) {
         return R.ok(userService.queryUsersByAddress(ids, city));
+    }
+
+    /**
+     * 复杂条件查询用户（后台筛选，条件均可为空）
+     * GET /users/list?name=Jack&status=1&minBalance=1000&maxBalance=20000
+     */
+    @Operation(summary = "复杂条件查询用户")
+    @GetMapping("/list")
+    public R<List<UserVO>> queryUsers(UserQuery query) {
+        return R.ok(userService.queryUsers(query));
     }
 }

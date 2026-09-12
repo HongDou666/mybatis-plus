@@ -3,6 +3,7 @@ package com.zqc.service;
 import com.baomidou.mybatisplus.spring.service.IService;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.po.User;
+import com.zqc.domain.query.UserQuery;
 import com.zqc.domain.vo.UserVO;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public interface IUserService extends IService<User> {
     void deductBalance(List<Long> ids, int amount);
 
     /**
-     * 根据单个用户 id 扣减余额（参数校验、用户存在性、余额保护、影响行数校验）
+     * 根据单个用户 id 扣减余额（校验状态/余额；扣完为 0 则自动冻结）
      *
      * @param id    用户 id
      * @param money 扣减金额（须大于 0）
@@ -57,4 +58,11 @@ public interface IUserService extends IService<User> {
      * @param city 城市，如「北京」
      */
     List<UserVO> queryUsersByAddress(List<Long> ids, String city);
+
+    /**
+     * 复杂条件查询用户（Lambda 条件构造，条件均可为空）
+     *
+     * @param query name / status / minBalance / maxBalance，未传则不拼进 WHERE
+     */
+    List<UserVO> queryUsers(UserQuery query);
 }

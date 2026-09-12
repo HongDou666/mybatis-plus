@@ -21,6 +21,7 @@
 | PUT | `/users/balance/deduct?ids=&amount=` | 批量扣减余额（自定义 SQL） |
 | PUT | `/users/{id}/deduction/{money}` | 按单个用户 id 扣减余额（自定义 SQL） |
 | GET | `/users/by-address?city=&ids=` | 按城市+用户 id 关联 address 查询（自定义 SQL） |
+| GET | `/users/list` | 复杂条件查询（name/status/minBalance/maxBalance，均可空） |
 
 ## 关键目录结构
 
