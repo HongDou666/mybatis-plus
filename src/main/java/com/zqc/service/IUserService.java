@@ -43,10 +43,10 @@ public interface IUserService extends IService<User> {
     void deductBalance(List<Long> ids, int amount);
 
     /**
-     * 根据单个用户 id 扣减余额（复用自定义 SQL deductBalance）
+     * 根据单个用户 id 扣减余额（参数校验、用户存在性、余额保护、影响行数校验）
      *
      * @param id    用户 id
-     * @param money 扣减金额
+     * @param money 扣减金额（须大于 0）
      */
     void deductBalanceById(Long id, int money);
 

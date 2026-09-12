@@ -71,13 +71,29 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
-     * Wrapper 拼 id = ?，复用同一条自定义扣减 SQL
+     * 根据 id 扣减余额：校验参数 → 校验用户存在 → WHERE 带余额保护 → 校验影响行数
      */
     @Override
     public void deductBalanceById(Long id, int money) {
+        if (id == null) {
+            throw new IllegalArgumentException("用户 id 不能为空");
+        }
+        if (money <= 0) {
+            throw new IllegalArgumentException("扣减金额必须大于 0");
+        }
+        // 先判断用户是否存在，避免与「余额不足」混淆
+        User user = getById(id);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在，id=" + id);
+        }
+        // balance >= money，防止扣成负数
         var wrapper = Wrappers.<User>lambdaQuery()
-                .eq(User::getId, id);
-        getBaseMapper().deductBalance(wrapper, money);
+                .eq(User::getId, id) // 指定用户 id
+                .ge(User::getBalance, money); // 确保余额足够
+        int rows = getBaseMapper().deductBalance(wrapper, money);
+        if (rows == 0) {
+            throw new IllegalStateException("余额不足，扣减失败，id=" + id + ", money=" + money);
+        }
     }
 
     /**
