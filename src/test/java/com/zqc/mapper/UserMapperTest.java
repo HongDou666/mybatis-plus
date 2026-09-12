@@ -107,11 +107,10 @@ class UserMapperTest {
     @Test
     void testQueryUsersByBeijingAddressAndIds() {
         List<Long> ids = List.of(1L, 2L, 4L);
-        // JOIN 场景用表别名列名，避免 id 歧义
+        // Wrapper 只拼 id；city 交给 Mapper 参数（写在 XML）
         var query = Wrappers.<User>query()
-                .in("u.id", ids) // 指定查询条件
-                .eq("a.city", "北京"); // 指定查询条件
-        List<User> users = userMapper.queryUsersByAddress(query);
+                .in("u.id", ids);
+        List<User> users = userMapper.queryUsersByAddress(query, "北京");
         users.forEach(System.out::println);
     }
 }

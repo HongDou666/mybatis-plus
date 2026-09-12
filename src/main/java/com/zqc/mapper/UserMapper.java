@@ -18,7 +18,9 @@ public interface UserMapper extends BaseMapper<User> {
     int deductBalance(@Param(Constants.WRAPPER) Wrapper<User> wrapper, @Param("amount") int amount);
 
     /**
-     * 自定义 SQL：按收货地址关联查询用户；WHERE 由 Wrapper 动态拼接（SQL 见 UserMapper.xml）
+     * 自定义 SQL：按收货地址关联查询用户；
+     * city 写在 XML，WHERE（如 u.id IN）由 Wrapper 动态拼接
      */
-    List<User> queryUsersByAddress(@Param(Constants.WRAPPER) Wrapper<User> wrapper);
+    List<User> queryUsersByAddress(@Param(Constants.WRAPPER) Wrapper<User> wrapper,
+                                   @Param("city") String city);
 }

@@ -2,11 +2,22 @@
 
 ## 功能概述
 
-本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）领域模型与数据访问。用户 CRUD 通过 `UserMapper` 继承 MyBatis-Plus `BaseMapper<User>` 的通用方法完成（如 `insert`、`selectById`、`selectBatchIds`、`updateById`、`deleteById`），不再依赖自定义 XML CRUD SQL。User 主键使用 MyBatis-Plus 雪花算法（`IdType.ASSIGN_ID`），建表脚本 `user.id` 无 `AUTO_INCREMENT`。练习库名为 `mybatis_plus`。
+本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）领域模型、数据访问与 REST 接口。用户 CRUD 通过 `UserMapper` 继承 MyBatis-Plus `BaseMapper<User>` 的通用方法完成（如 `insert`、`selectById`、`selectBatchIds`、`updateById`、`deleteById`），业务层由 `IUserService` / `UserServiceImpl`（继承 `ServiceImpl`）封装，对外由 `UserController` 提供 REST 接口（含通用 CRUD 与自定义 SQL：扣减余额、按地址关联查询），统一响应包装为 `common.R`。User 主键使用 MyBatis-Plus 雪花算法（`IdType.ASSIGN_ID`），建表脚本 `user.id` 无 `AUTO_INCREMENT`。练习库名为 `mybatis_plus`。
 
-`UserMapperTest` 除 BaseMapper CRUD 外，还覆盖 LambdaQueryWrapper / LambdaUpdateWrapper 条件示例（用户名 like + 余额 ge；按用户名更新余额）。另有自定义 SQL 示例：`deductBalance`（XML 扣减 + Wrapper WHERE）、`queryUsersByAddress`（user JOIN address + Wrapper WHERE，注解写法已注释保留）。
+`UserMapperTest` 除 BaseMapper CRUD 外，还覆盖 LambdaQueryWrapper / LambdaUpdateWrapper 条件示例（用户名 like + 余额 ge；按用户名更新余额）。另有自定义 SQL 示例：`deductBalance`（XML 扣减 + Wrapper WHERE）、`queryUsersByAddress`（user JOIN address；`city` 为 XML 参数，`u.id` 等由 Wrapper WHERE 注入，注解写法已注释保留）。
 
 `application.yaml` 中已配置 MyBatis-Plus 常用项：`mapper-locations`、`type-aliases-package`、`map-underscore-to-camel-case`、stdout SQL 日志（`StdOutImpl`）、全局主键策略 `id-type: assign_id`（未启用逻辑删除，User 表暂无 deleted 字段）。
+
+## REST 接口（UserController）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/users` | 新增用户，body 为 `UserFormDTO`，返回 `R.ok()` |
+| DELETE | `/users/{id}` | 按 id 删除用户，返回 `R.ok()` |
+| GET | `/users/{id}` | 按 id 查询用户，返回 `R.ok(UserVO)` |
+| GET | `/users?ids=` | 按 id 列表批量查询，返回 `R.ok(List<UserVO>)` |
+| PUT | `/users/balance/deduct?ids=&amount=` | 批量扣减余额（自定义 SQL） |
+| GET | `/users/by-address?city=&ids=` | 按城市+用户 id 关联 address 查询（自定义 SQL） |
 
 ## 关键目录结构
 
@@ -18,8 +29,16 @@ mybatis-plus/
 │   └── mybatis_plus.sql           # 数据库初始化脚本（库名 mybatis_plus）
 ├── src/main/java/com/zqc/
 │   ├── MybatisPlusApplication.java
+│   ├── common/
+│   │   └── R.java               # 统一响应包装（code / msg / data）
+│   ├── controller/
+│   │   └── UserController.java  # 用户 REST：增删查（单/批量）
 │   ├── domain/                  # po / dto / query / vo（User 实体含 @TableName / @TableId）
-│   └── mapper/                  # UserMapper extends BaseMapper + deductBalance 自定义 SQL
+│   ├── mapper/                  # UserMapper extends BaseMapper + deductBalance 自定义 SQL
+│   └── service/
+│       ├── IUserService.java    # 用户业务接口（继承 spring.service.IService<User>）
+│       └── impl/
+│           └── UserServiceImpl.java  # spring.service.impl.ServiceImpl + Hutool BeanUtil
 ├── src/main/resources/
 │   ├── application.yaml
 │   └── mapper/UserMapper.xml    # deductBalance 自定义 SQL（注解写法已注释）

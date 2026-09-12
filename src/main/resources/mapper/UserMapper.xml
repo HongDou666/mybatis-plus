@@ -9,11 +9,11 @@
         ${ew.customSqlSegment}
     </update>
 
-    <!-- 自定义 SQL：关联 address 查用户，WHERE 由 Wrapper 注入（如 u.id IN / a.city =） -->
+    <!-- 自定义 SQL：city 用参数绑定；u.id 等条件由 Wrapper 注入 -->
     <select id="queryUsersByAddress" resultType="com.zqc.domain.po.User">
         SELECT DISTINCT u.*
         FROM `user` u
-        INNER JOIN address a ON u.id = a.user_id AND a.deleted = 0
+        INNER JOIN address a ON u.id = a.user_id AND a.deleted = 0 AND a.city = #{city}
         ${ew.customSqlSegment}
     </select>
 
