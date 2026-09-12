@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: mybatis-plus
+  datasource:
+    # MySQL 连接地址（库名 mybatis_plus）
+    url: jdbc:mysql://127.0.0.1:3306/mybatis_plus?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+
+# 日志：业务包 debug，便于观察 Mapper / SQL 相关输出
+logging:
+  level:
+    com.zqc: debug
+  pattern:
+    dateformat: HH:mm:ss
+
+mybatis-plus:
+  # Mapper XML 扫描路径
+  mapper-locations: classpath*:/mapper/**/*.xml
+  # 实体类别名包（XML 中可写简短类名，如 User）
+  type-aliases-package: com.zqc.domain.po
+  configuration:
+    # 表字段下划线 ↔ 实体驼峰（create_time ↔ createTime）
+    map-underscore-to-camel-case: true
+    # 开发期控制台打印 SQL（生产环境建议去掉，改用 logging.level）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      # 全局主键策略：雪花算法（实体未单独指定时生效）
+      id-type: assign_id
+      # 更新策略：非空字段才更新（避免默认值被覆盖）
+      update-strategy: not_empty
