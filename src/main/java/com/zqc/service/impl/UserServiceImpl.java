@@ -201,7 +201,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 .ge(query.getMinBalance() != null, User::getBalance, query.getMinBalance())
                 .le(query.getMaxBalance() != null, User::getBalance, query.getMaxBalance())
                 .page(page);
-        // return PageDTO.of(page, UserVO.class);
         List<User> users = page.getRecords();
         if (users == null || users.isEmpty()) {
             return PageDTO.empty(page);
