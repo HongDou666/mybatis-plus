@@ -1,6 +1,7 @@
 package com.zqc.service;
 
 import com.baomidou.mybatisplus.spring.service.IService;
+import com.zqc.domain.dto.PageDTO;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.po.User;
 import com.zqc.domain.query.UserQuery;
@@ -65,4 +66,11 @@ public interface IUserService extends IService<User> {
      * @param query name / status / minBalance / maxBalance，未传则不拼进 WHERE
      */
     List<UserVO> queryUsers(UserQuery query);
+
+    /**
+     * 复杂条件分页查询用户（依赖 PaginationInnerInterceptor 改写 SQL）
+     *
+     * @param query 筛选条件 + pageNo/pageSize/sortBy，未传则不拼进 WHERE / 用默认分页
+     */
+    PageDTO<UserVO> queryUsersPage(UserQuery query);
 }

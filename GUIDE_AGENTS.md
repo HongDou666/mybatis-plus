@@ -8,6 +8,8 @@
 
 `application.yaml` 中已配置 MyBatis-Plus 常用项：`mapper-locations`、`type-aliases-package`、`map-underscore-to-camel-case`、stdout SQL 日志（`StdOutImpl`）、全局主键策略 `id-type: assign_id`、逻辑删除 `logic-delete-field/value`（与 `Address.@TableLogic` 配合）。数据源 JDBC URL 已开启 `rewriteBatchedStatements=true`，便于批量写入（如 `saveBatch`）被驱动重写为多值 SQL。
 
+分页：`config/MybatisPlusConfig.java` 注册 `MybatisPlusInterceptor` + `PaginationInnerInterceptor(DbType.MYSQL)`，否则 `IService.page` / `BaseMapper.selectPage` 不会自动拼 LIMIT/COUNT。分页入参复用 `PageQuery`（`UserQuery` 继承之），出参为 `PageDTO`；示例接口 `GET /users/page`。需额外依赖 `mybatis-plus-jsqlparser`（分页插件实现所在模块）。
+
 接口文档使用 Knife4j Next（OpenAPI3）Boot4 专用 starter：`com.baizhukui:knife4j-openapi3-boot4-spring-boot-starter`（当前版本 `5.6.1`；`5.7.1` 在当前镜像未能解析）。文档增强页地址：http://localhost:8080/doc.html ；OpenAPI 元信息由 `config/OpenApiConfig.java` 配置。
 
 ## REST 接口（UserController）
@@ -22,6 +24,7 @@
 | PUT | `/users/{id}/deduction/{money}` | 按单个用户 id 扣减余额（自定义 SQL） |
 | GET | `/users/by-address?city=&ids=` | 按城市+用户 id 关联 address 查询（自定义 SQL） |
 | GET | `/users/list` | 复杂条件查询（name/status/minBalance/maxBalance，均可空） |
+| GET | `/users/page` | 复杂条件分页查询（含各自收货地址；pageNo/pageSize/sortBy + 同上筛选），返回 `R.ok(PageDTO<UserVO>)` |
 
 ## REST 接口（AddressController）
 
@@ -38,7 +41,7 @@
 ```
 mybatis-plus/
 ├── GUIDE_AGENTS.md              # 本文件：工程功能与目录说明
-├── pom.xml                      # Maven 配置（Spring Boot + MyBatis-Plus + Knife4j Boot4）
+├── pom.xml                      # Maven 配置（Spring Boot + MyBatis-Plus + jsqlparser 分页 + Knife4j Boot4）
 ├── sql/
 │   └── mybatis_plus.sql           # 数据库初始化脚本（库名 mybatis_plus）
 ├── src/main/java/com/zqc/
@@ -50,11 +53,12 @@ mybatis-plus/
 │   │       ├── BizException.java            # 业务异常（带 code）
 │   │       └── GlobalExceptionHandler.java  # 全局异常 → R
 │   ├── config/
-│   │   └── OpenApiConfig.java   # Knife4j / OpenAPI3 文档元信息
+│   │   ├── OpenApiConfig.java      # Knife4j / OpenAPI3 文档元信息
+│   │   └── MybatisPlusConfig.java    # MyBatis-Plus 拦截器（分页插件 PaginationInnerInterceptor）
 │   ├── controller/
 │   │   ├── UserController.java     # 用户 REST
 │   │   └── AddressController.java  # 地址基本增删改查
-│   ├── domain/                  # po / dto / query / vo（User、UserInfo、Address）
+│   ├── domain/                  # po / dto / query / vo（User、UserInfo、Address、PageQuery、PageDTO）
 │   ├── enums/
 │   │   └── UserStatus.java      # 用户状态枚举（@EnumValue 与库 int 互转）
 │   ├── mapper/                  # UserMapper、AddressMapper
@@ -72,4 +76,4 @@ mybatis-plus/
     └── mapper/UserMapperTest.java  # BaseMapper CRUD + Lambda 条件查询/更新示例
 ```
 
-说明：`domain/po/UserInfo.java` 对应 `user.info` JSON（age / intro / gender）；`User` 实体用 `JacksonTypeHandler` 读写该列。
+说明：`domain/po/UserInfo.java` 对应 `user.info` JSON（age / intro / gender）；`User` 实体用 `JacksonTypeHandler` 读写该列。`UserQuery` 继承 `PageQuery`，列表与分页接口共用筛选字段。

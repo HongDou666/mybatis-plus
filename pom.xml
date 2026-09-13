@@ -41,6 +41,12 @@
             <artifactId>mybatis-plus-spring-boot4-starter</artifactId>
             <version>3.5.17</version>
         </dependency>
+        <!-- 分页等插件实现（PaginationInnerInterceptor）；MP 3.5.9+ 需单独引入 -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-jsqlparser</artifactId>
+            <version>3.5.17</version>
+        </dependency>
         <!-- Knife4j Next OpenAPI3（Boot4 专用 starter，文档页 /doc.html） -->
         <dependency>
             <groupId>com.baizhukui</groupId>

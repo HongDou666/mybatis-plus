@@ -1,6 +1,7 @@
 package com.zqc.controller;
 
 import com.zqc.common.R;
+import com.zqc.domain.dto.PageDTO;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.query.UserQuery;
 import com.zqc.domain.vo.UserVO;
@@ -126,5 +127,15 @@ public class UserController {
     @GetMapping("/list")
     public R<List<UserVO>> queryUsers(UserQuery query) {
         return R.ok(userService.queryUsers(query));
+    }
+
+    /**
+     * 复杂条件分页查询（验证 PaginationInnerInterceptor）
+     * GET /users/page?pageNo=1&pageSize=5&name=Jack&status=1
+     */
+    @Operation(summary = "复杂条件分页查询用户")
+    @GetMapping("/page")
+    public R<PageDTO<UserVO>> queryUsersPage(UserQuery query) {
+        return R.ok(userService.queryUsersPage(query));
     }
 }

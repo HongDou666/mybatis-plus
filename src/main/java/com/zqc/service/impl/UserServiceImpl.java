@@ -3,10 +3,12 @@ package com.zqc.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.zqc.common.ResultCode;
 import com.zqc.common.exception.BizException;
+import com.zqc.domain.dto.PageDTO;
 import com.zqc.domain.dto.UserFormDTO;
 import com.zqc.domain.po.Address;
 import com.zqc.domain.po.User;
@@ -84,16 +86,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return List.of();
         }
         List<UserVO> vos = BeanUtil.copyToList(users, UserVO.class);
-        // 一次查出全部相关地址
-        List<Address> addresses = Db.lambdaQuery(Address.class)
-                .in(Address::getUserId, ids)
-                .list();
-        List<AddressVO> addressVOList = BeanUtil.copyToList(addresses, AddressVO.class);
-        Map<Long, List<AddressVO>> addressMap = addressVOList.stream()
-                .collect(Collectors.groupingBy(AddressVO::getUserId));
-        for (UserVO vo : vos) {
-            vo.setAddresses(addressMap.getOrDefault(vo.getId(), List.of()));
-        }
+        fillAddresses(vos);
         return vos;
     }
 
@@ -188,5 +181,51 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 .le(query.getMaxBalance() != null, User::getBalance, query.getMaxBalance())
                 .list(); // 执行查询
         return BeanUtil.copyToList(users, UserVO.class);
+    }
+
+    /**
+     * 与 {@link #queryUsers} 相同条件，改为 IService 分页：依赖 PaginationInnerInterceptor 生成 LIMIT / COUNT。
+     * 对本页用户批量加载收货地址（一次 in 查询，避免 N+1），与 {@link #queryUserByIds} 一致。
+     */
+    @Override
+    public PageDTO<UserVO> queryUsersPage(UserQuery query) {
+        if (query == null) {
+            query = new UserQuery();
+        }
+        UserStatus status = UserStatus.of(query.getStatus());
+        // 转为 MP Page；未传排序时默认按 create_time 降序
+        Page<User> page = query.toMpPageDefaultSortByCreateTimeDesc();
+        lambdaQuery()
+                .like(StrUtil.isNotBlank(query.getName()), User::getUsername, query.getName())
+                .eq(status != null, User::getStatus, status)
+                .ge(query.getMinBalance() != null, User::getBalance, query.getMinBalance())
+                .le(query.getMaxBalance() != null, User::getBalance, query.getMaxBalance())
+                .page(page);
+        // return PageDTO.of(page, UserVO.class);
+        List<User> users = page.getRecords();
+        if (users == null || users.isEmpty()) {
+            return PageDTO.empty(page);
+        }
+        List<UserVO> vos = BeanUtil.copyToList(users, UserVO.class);
+        fillAddresses(vos);
+        return new PageDTO<>(page.getTotal(), page.getPages(), vos);
+    }
+
+    /**
+     * 对本批 UserVO 一次查出地址并按 userId 挂上，无地址则为空列表。
+     */
+    private void fillAddresses(List<UserVO> vos) {
+        if (vos == null || vos.isEmpty()) {
+            return;
+        }
+        List<Long> userIds = vos.stream().map(UserVO::getId).toList();
+        List<Address> addresses = Db.lambdaQuery(Address.class)
+                .in(Address::getUserId, userIds)
+                .list();
+        Map<Long, List<AddressVO>> addressMap = BeanUtil.copyToList(addresses, AddressVO.class).stream()
+                .collect(Collectors.groupingBy(AddressVO::getUserId));
+        for (UserVO vo : vos) {
+            vo.setAddresses(addressMap.getOrDefault(vo.getId(), List.of()));
+        }
     }
 }
