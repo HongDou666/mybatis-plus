@@ -6,7 +6,7 @@
 
 `UserMapperTest` 除 BaseMapper CRUD 外，还覆盖 LambdaQueryWrapper / LambdaUpdateWrapper 条件示例（用户名 like + 余额 ge；按用户名更新余额）。另有自定义 SQL 示例：`deductBalance`（XML 扣减 + Wrapper WHERE）、`queryUsersByAddress`（user JOIN address；`city` 为 XML 参数，`u.id` 等由 Wrapper WHERE 注入，注解写法已注释保留）。
 
-`application.yaml` 中已配置 MyBatis-Plus 常用项：`mapper-locations`、`type-aliases-package`、`map-underscore-to-camel-case`、stdout SQL 日志（`StdOutImpl`）、全局主键策略 `id-type: assign_id`（未启用逻辑删除，User 表暂无 deleted 字段）。
+`application.yaml` 中已配置 MyBatis-Plus 常用项：`mapper-locations`、`type-aliases-package`、`map-underscore-to-camel-case`、stdout SQL 日志（`StdOutImpl`）、全局主键策略 `id-type: assign_id`（未启用逻辑删除，User 表暂无 deleted 字段）。数据源 JDBC URL 已开启 `rewriteBatchedStatements=true`，便于批量写入（如 `saveBatch`）被驱动重写为多值 SQL。
 
 接口文档使用 Knife4j Next（OpenAPI3）Boot4 专用 starter：`com.baizhukui:knife4j-openapi3-boot4-spring-boot-starter`（当前版本 `5.6.1`；`5.7.1` 在当前镜像未能解析）。文档增强页地址：http://localhost:8080/doc.html ；OpenAPI 元信息由 `config/OpenApiConfig.java` 配置。
 
@@ -16,7 +16,7 @@
 |------|------|------|
 | POST | `/users` | 新增用户，body 为 `UserFormDTO`，返回 `R.ok()` |
 | DELETE | `/users/{id}` | 按 id 删除用户，返回 `R.ok()` |
-| GET | `/users/{id}` | 按 id 查询用户，返回 `R.ok(UserVO)` |
+| GET | `/users/{id}` | 按 id 查询用户（含收货地址列表），返回 `R.ok(UserVO)` |
 | GET | `/users?ids=` | 按 id 列表批量查询，返回 `R.ok(List<UserVO>)` |
 | PUT | `/users/balance/deduct?ids=&amount=` | 批量扣减余额（自定义 SQL） |
 | PUT | `/users/{id}/deduction/{money}` | 按单个用户 id 扣减余额（自定义 SQL） |
@@ -43,14 +43,14 @@ mybatis-plus/
 │   │   └── OpenApiConfig.java   # Knife4j / OpenAPI3 文档元信息
 │   ├── controller/
 │   │   └── UserController.java  # 用户 REST：增删查（单/批量）+ OpenAPI 注解
-│   ├── domain/                  # po / dto / query / vo（User 实体含 @TableName / @TableId）
-│   ├── mapper/                  # UserMapper extends BaseMapper + deductBalance 自定义 SQL
+│   ├── domain/                  # po / dto / query / vo（User、Address；UserVO 含 addresses）
+│   ├── mapper/                  # UserMapper、AddressMapper（Db 查地址用）
 │   └── service/
 │       ├── IUserService.java    # 用户业务接口（继承 spring.service.IService<User>）
 │       └── impl/
-│           └── UserServiceImpl.java  # spring.service.impl.ServiceImpl + Hutool BeanUtil
+│           └── UserServiceImpl.java  # 含 Db.lambdaQuery(Address) 避免循环依赖
 ├── src/main/resources/
-│   ├── application.yaml         # 含 springdoc / knife4j 文档配置
+│   ├── application.yaml         # 含 springdoc / knife4j；JDBC rewriteBatchedStatements
 │   └── mapper/UserMapper.xml    # deductBalance 自定义 SQL（注解写法已注释）
 └── src/test/java/com/zqc/
     ├── MybatisPlusApplicationTests.java

@@ -3,7 +3,8 @@ spring:
     name: mybatis-plus
   datasource:
     # MySQL 连接地址（库名 mybatis_plus）
-    url: jdbc:mysql://127.0.0.1:3306/mybatis_plus?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
+    # rewriteBatchedStatements=true：批处理时重写为多值 SQL，提升 saveBatch 等批量写入性能
+    url: jdbc:mysql://127.0.0.1:3306/mybatis_plus?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 123456

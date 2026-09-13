@@ -26,7 +26,7 @@ public interface IUserService extends IService<User> {
     void deleteUser(Long id);
 
     /**
-     * 根据 id 查询用户，返回 VO（无密码等敏感字段）；不存在时返回 null
+     * 根据 id 查询用户（含收货地址列表）；不存在时抛业务异常
      */
     UserVO queryUserById(Long id);
 

@@ -3,12 +3,15 @@ package com.zqc.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.toolkit.Db;
 import com.baomidou.mybatisplus.spring.service.impl.ServiceImpl;
 import com.zqc.common.ResultCode;
 import com.zqc.common.exception.BizException;
 import com.zqc.domain.dto.UserFormDTO;
+import com.zqc.domain.po.Address;
 import com.zqc.domain.po.User;
 import com.zqc.domain.query.UserQuery;
+import com.zqc.domain.vo.AddressVO;
 import com.zqc.domain.vo.UserVO;
 import com.zqc.mapper.UserMapper;
 import com.zqc.service.IUserService;
@@ -45,15 +48,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
-     * getById 查 PO，再拷贝为 UserVO（过滤 password 等字段）
+     * 根据 id 查询用户，并附带收货地址列表。
+     * 地址查询使用 {@link Db} 静态工具，避免注入 AddressService 引发循环依赖。
+     * 用户不存在时抛 {@link BizException}（USER_NOT_FOUND）。
      */
     @Override
     public UserVO queryUserById(Long id) {
         User user = getById(id);
         if (user == null) {
-            return null;
+            throw new BizException(ResultCode.USER_NOT_FOUND, "用户不存在，id=" + id);
         }
-        return BeanUtil.copyProperties(user, UserVO.class);
+        UserVO vo = BeanUtil.copyProperties(user, UserVO.class);
+        // 通过 Db 按 userId 查地址（不注入其他 Service）
+        List<Address> addresses = Db.lambdaQuery(Address.class)
+                .eq(Address::getUserId, id)
+                .list();
+        vo.setAddresses(BeanUtil.copyToList(addresses, AddressVO.class));
+        return vo;
     }
 
     /**
@@ -73,6 +84,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         var wrapper = Wrappers.<User>lambdaQuery()
                 .in(User::getId, ids);
         getBaseMapper().deductBalance(wrapper, amount);
+    }
+
+    /**
+     * Wrapper 只拼 u.id IN (...)；city 作为 Mapper 参数写在 XML JOIN 条件中
+     */
+    @Override
+    public List<UserVO> queryUsersByAddress(List<Long> ids, String city) {
+        var query = Wrappers.<User>query()
+                .in("u.id", ids);
+        List<User> users = getBaseMapper().queryUsersByAddress(query, city);
+        return BeanUtil.copyToList(users, UserVO.class);
     }
 
     /**
@@ -123,18 +145,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     "扣减失败（并发下余额或状态已变更），id=" + id + ", money=" + money);
         }
     }
-
-    /**
-     * Wrapper 只拼 u.id IN (...)；city 作为 Mapper 参数写在 XML JOIN 条件中
-     */
-    @Override
-    public List<UserVO> queryUsersByAddress(List<Long> ids, String city) {
-        var query = Wrappers.<User>query()
-                .in("u.id", ids);
-        List<User> users = getBaseMapper().queryUsersByAddress(query, city);
-        return BeanUtil.copyToList(users, UserVO.class);
-    }
-
+   
     /**
      * 使用 IService.lambdaQuery() 动态拼接条件：第一个布尔参数为 true 时才加入该条件
      */

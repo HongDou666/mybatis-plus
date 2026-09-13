@@ -62,7 +62,7 @@ public class UserController {
      * 根据 id 查询用户，返回 UserVO
      * GET /users/{id}
      */
-    @Operation(summary = "根据 id 查询用户")
+    @Operation(summary = "根据 id 查询用户（含收货地址列表）")
     @GetMapping("/{id}")
     public R<UserVO> queryUserById(
             @Parameter(description = "用户 id") @PathVariable Long id) {
