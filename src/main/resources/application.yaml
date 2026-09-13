@@ -28,6 +28,8 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     # 枚举默认处理器：带 @EnumValue / IEnum 的枚举会与库字段自动转换（一般无需改）
     # default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+    # JSON 字段（如 User.info）在实体上用 @TableField(typeHandler = JacksonTypeHandler.class)
+    # 并配合 @TableName(autoResultMap = true)，无需在此全局注册 typeHandler
   global-config:
     db-config:
       # 全局主键策略：雪花算法（实体未单独指定时生效）

@@ -1,5 +1,6 @@
 package com.zqc.domain.vo;
 
+import com.zqc.domain.po.UserInfo;
 import com.zqc.enums.UserStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -16,8 +17,8 @@ public class UserVO {
     @Schema(description = "用户名")
     private String username;
 
-    @Schema(description = "额外信息")
-    private String info;
+    @Schema(description = "额外信息（JSON 对象）")
+    private UserInfo info;
 
     @Schema(description = "状态（1正常 2冻结）")
     private UserStatus status;

@@ -2,7 +2,7 @@
 
 ## 功能概述
 
-本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）与收货地址（Address）领域模型、数据访问与 REST 接口。用户 CRUD 与地址基本增删改查分别由 `IUserService` / `IAddressService` 封装；查用户时可经 `Db` 附带地址列表。统一响应为 `common.R`，业务异常为 `ResultCode` + `BizException`。`User.status` 使用枚举 `UserStatus` + `@EnumValue` 与库 int 自动转换。练习库名为 `mybatis_plus`。
+本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）与收货地址（Address）领域模型、数据访问与 REST 接口。用户 CRUD 与地址基本增删改查分别由 `IUserService` / `IAddressService` 封装；查用户时可经 `Db` 附带地址列表。统一响应为 `common.R`，业务异常为 `ResultCode` + `BizException`。`User.status` 使用枚举 `UserStatus` + `@EnumValue` 与库 int 自动转换。`User.info` 为 JSON 列，映射为 `UserInfo` 对象，经 `@TableField(typeHandler = JacksonTypeHandler.class)` + `@TableName(autoResultMap = true)` 自动与库 JSON 互转。练习库名为 `mybatis_plus`。
 
 `UserMapperTest` 除 BaseMapper CRUD 外，还覆盖 LambdaQueryWrapper / LambdaUpdateWrapper 条件示例（用户名 like + 余额 ge；按用户名更新余额）。另有自定义 SQL 示例：`deductBalance`（XML 扣减 + Wrapper WHERE）、`queryUsersByAddress`（user JOIN address；`city` 为 XML 参数，`u.id` 等由 Wrapper WHERE 注入，注解写法已注释保留）。
 
@@ -54,7 +54,7 @@ mybatis-plus/
 │   ├── controller/
 │   │   ├── UserController.java     # 用户 REST
 │   │   └── AddressController.java  # 地址基本增删改查
-│   ├── domain/                  # po / dto / query / vo（User、Address）
+│   ├── domain/                  # po / dto / query / vo（User、UserInfo、Address）
 │   ├── enums/
 │   │   └── UserStatus.java      # 用户状态枚举（@EnumValue 与库 int 互转）
 │   ├── mapper/                  # UserMapper、AddressMapper
@@ -65,9 +65,11 @@ mybatis-plus/
 │           ├── UserServiceImpl.java
 │           └── AddressServiceImpl.java
 ├── src/main/resources/
-│   ├── application.yaml         # 含 springdoc / knife4j；JDBC rewriteBatchedStatements
+│   ├── application.yaml         # 含 springdoc / knife4j；JDBC rewriteBatchedStatements；JSON typeHandler 说明
 │   └── mapper/UserMapper.xml    # deductBalance 自定义 SQL（注解写法已注释）
 └── src/test/java/com/zqc/
     ├── MybatisPlusApplicationTests.java
     └── mapper/UserMapperTest.java  # BaseMapper CRUD + Lambda 条件查询/更新示例
 ```
+
+说明：`domain/po/UserInfo.java` 对应 `user.info` JSON（age / intro / gender）；`User` 实体用 `JacksonTypeHandler` 读写该列。

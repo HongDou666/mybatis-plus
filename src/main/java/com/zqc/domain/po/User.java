@@ -1,15 +1,17 @@
 package com.zqc.domain.po;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.zqc.enums.UserStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-@TableName("user") // 指定表名
+@TableName(value = "user", autoResultMap = true) // autoResultMap：查询结果才能走 typeHandler
 public class User {
 
     /**
@@ -34,9 +36,10 @@ public class User {
     private String phone;
 
     /**
-     * 详细信息
+     * 详细信息（库中为 JSON，由 JacksonTypeHandler 与 UserInfo 互转）
      */
-    private String info;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private UserInfo info;
 
     /**
      * 使用状态（枚举，库中为 int，由 @EnumValue 自动转换）
