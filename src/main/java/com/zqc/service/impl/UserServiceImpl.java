@@ -13,6 +13,7 @@ import com.zqc.domain.po.User;
 import com.zqc.domain.query.UserQuery;
 import com.zqc.domain.vo.AddressVO;
 import com.zqc.domain.vo.UserVO;
+import com.zqc.enums.UserStatus;
 import com.zqc.mapper.UserMapper;
 import com.zqc.service.IUserService;
 import org.springframework.stereotype.Service;
@@ -121,7 +122,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
      * 根据 id 扣减余额：
      * 1）校验用户状态（须正常，冻结不可扣）
      * 2）校验用户余额（须 >= 扣减金额）
-     * 3）扣减成功后若余额为 0，则将 status 置为 2（冻结）
+     * 3）扣减成功后若余额为 0，则将 status 置为 FROZEN
      * 使用 IService.lambdaUpdate()，无需自定义 deductBalance SQL。
      * 失败时抛 {@link com.zqc.common.exception.BizException}，由全局异常处理器转为 R。
      */
@@ -140,8 +141,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (user == null) {
             throw new BizException(ResultCode.USER_NOT_FOUND, "用户不存在，id=" + id);
         }
-        // 3. 校验用户状态：status 1 正常，2 冻结；冻结不可扣减
-        if (user.getStatus() == null || !Integer.valueOf(1).equals(user.getStatus())) {
+        // 3. 校验用户状态：仅 NORMAL 可扣减
+        if (user.getStatus() != UserStatus.NORMAL) {
             throw new BizException(ResultCode.USER_FROZEN, "用户状态异常或已冻结，无法扣减余额，id=" + id);
         }
         // 4. 校验用户余额：余额必须足够
@@ -155,9 +156,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         int remain = balance - money;
         boolean success = lambdaUpdate()
                 .set(User::getBalance, remain) // 设置用户余额为剩余金额
-                .set(remain == 0, User::getStatus, 2) // 若扣完为 0 则将用户状态设置为冻结
+                .set(remain == 0, User::getStatus, UserStatus.FROZEN) // 若扣完为 0 则将用户状态设置为冻结
                 .eq(User::getId, id) // 条件1：用户 id
-                .eq(User::getStatus, 1) // 条件2：用户状态为正常
+                .eq(User::getStatus, UserStatus.NORMAL) // 条件2：用户状态为正常
                 .eq(User::getBalance, balance) // 条件3：用户余额等于查询时的值 乐观锁
                 .update(); // 执行更新
         if (!success) {
@@ -174,11 +175,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (query == null) {
             query = new UserQuery();
         }
+        // 查询条件里的 status 仍是 Integer，转成枚举再比较（由 @EnumValue 映射库字段）
+        UserStatus status = UserStatus.of(query.getStatus());
         List<User> users = lambdaQuery()
                 // 用户名关键字：非空才模糊查询
                 .like(StrUtil.isNotBlank(query.getName()), User::getUsername, query.getName())
                 // 状态：非空才等值匹配
-                .eq(query.getStatus() != null, User::getStatus, query.getStatus())
+                .eq(status != null, User::getStatus, status)
                 // 最小余额
                 .ge(query.getMinBalance() != null, User::getBalance, query.getMinBalance())
                 // 最大余额

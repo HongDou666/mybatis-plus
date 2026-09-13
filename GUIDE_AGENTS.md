@@ -2,7 +2,7 @@
 
 ## 功能概述
 
-本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）与收货地址（Address）领域模型、数据访问与 REST 接口。用户 CRUD 与地址基本增删改查分别由 `IUserService` / `IAddressService` 封装；查用户时可经 `Db` 附带地址列表。统一响应为 `common.R`，业务异常为 `ResultCode` + `BizException`。练习库名为 `mybatis_plus`。
+本工程基于 Spring Boot + MyBatis-Plus，用于练习用户（User）与收货地址（Address）领域模型、数据访问与 REST 接口。用户 CRUD 与地址基本增删改查分别由 `IUserService` / `IAddressService` 封装；查用户时可经 `Db` 附带地址列表。统一响应为 `common.R`，业务异常为 `ResultCode` + `BizException`。`User.status` 使用枚举 `UserStatus` + `@EnumValue` 与库 int 自动转换。练习库名为 `mybatis_plus`。
 
 `UserMapperTest` 除 BaseMapper CRUD 外，还覆盖 LambdaQueryWrapper / LambdaUpdateWrapper 条件示例（用户名 like + 余额 ge；按用户名更新余额）。另有自定义 SQL 示例：`deductBalance`（XML 扣减 + Wrapper WHERE）、`queryUsersByAddress`（user JOIN address；`city` 为 XML 参数，`u.id` 等由 Wrapper WHERE 注入，注解写法已注释保留）。
 
@@ -55,6 +55,8 @@ mybatis-plus/
 │   │   ├── UserController.java     # 用户 REST
 │   │   └── AddressController.java  # 地址基本增删改查
 │   ├── domain/                  # po / dto / query / vo（User、Address）
+│   ├── enums/
+│   │   └── UserStatus.java      # 用户状态枚举（@EnumValue 与库 int 互转）
 │   ├── mapper/                  # UserMapper、AddressMapper
 │   └── service/
 │       ├── IUserService.java

@@ -26,6 +26,8 @@ mybatis-plus:
     map-underscore-to-camel-case: true
     # 开发期控制台打印 SQL（生产环境建议去掉，改用 logging.level）
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 枚举默认处理器：带 @EnumValue / IEnum 的枚举会与库字段自动转换（一般无需改）
+    # default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
   global-config:
     db-config:
       # 全局主键策略：雪花算法（实体未单独指定时生效）

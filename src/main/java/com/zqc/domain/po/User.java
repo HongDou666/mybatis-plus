@@ -3,6 +3,7 @@ package com.zqc.domain.po;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.zqc.enums.UserStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,9 +39,9 @@ public class User {
     private String info;
 
     /**
-     * 使用状态（1正常 2冻结）
+     * 使用状态（枚举，库中为 int，由 @EnumValue 自动转换）
      */
-    private Integer status;
+    private UserStatus status;
 
     /**
      * 账户余额
