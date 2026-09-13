@@ -32,6 +32,12 @@ mybatis-plus:
       id-type: assign_id
       # 更新策略：非空字段才更新（避免默认值被覆盖）
       update-strategy: not_empty
+      # 全局逻辑删除字段名（实体仍可用 @TableLogic 标注；与全局配置一致即可）
+      logic-delete-field: deleted
+      # 已删除取值
+      logic-delete-value: 1
+      # 未删除取值
+      logic-not-delete-value: 0
 
 # Knife4j / springdoc 接口文档（浏览器访问：http://localhost:8080/doc.html）
 springdoc:

@@ -19,6 +19,8 @@ public enum ResultCode {
     USER_NOT_FOUND(40401, "用户不存在"),
     /** 用户已冻结，不允许扣减等操作 */
     USER_FROZEN(40301, "用户已冻结"),
+    /** 收货地址不存在 */
+    ADDRESS_NOT_FOUND(40402, "收货地址不存在"),
     /** 余额不足以完成本次扣减 */
     BALANCE_NOT_ENOUGH(40001, "余额不足"),
     /** 未预期的系统异常 */
