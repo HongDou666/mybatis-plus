@@ -31,7 +31,7 @@ public interface IUserService extends IService<User> {
     UserVO queryUserById(Long id);
 
     /**
-     * 根据 id 列表批量查询用户（一次 listByIds，避免循环查库）
+     * 根据 id 列表批量查询用户（含各自收货地址；批量查地址，避免 N+1）
      */
     List<UserVO> queryUserByIds(List<Long> ids);
 

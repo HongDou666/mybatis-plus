@@ -73,7 +73,7 @@ public class UserController {
      * 根据 id 列表批量查询用户，例如 /users?ids=1,2,4
      * GET /users?ids=
      */
-    @Operation(summary = "根据 id 列表批量查询用户")
+    @Operation(summary = "根据 id 列表批量查询用户（含收货地址列表）")
     @GetMapping
     public R<List<UserVO>> queryUserByIds(
             @Parameter(description = "用户 id 列表") @RequestParam List<Long> ids) {

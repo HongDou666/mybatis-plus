@@ -19,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 用户业务实现。
@@ -68,12 +70,30 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     /**
-     * listByIds 一次查出，再用 Hutool 批量转为 VO 列表
+     * 批量按 id 查询用户，并附带各自的收货地址列表。
+     * 用户 listByIds 一次查；地址用 Db.in(userId) 一次查，再内存分组，避免循环查库（N+1）。
      */
     @Override
     public List<UserVO> queryUserByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
         List<User> users = listByIds(ids);
-        return BeanUtil.copyToList(users, UserVO.class);
+        if (users.isEmpty()) {
+            return List.of();
+        }
+        List<UserVO> vos = BeanUtil.copyToList(users, UserVO.class);
+        // 一次查出全部相关地址
+        List<Address> addresses = Db.lambdaQuery(Address.class)
+                .in(Address::getUserId, ids)
+                .list();
+        List<AddressVO> addressVOList = BeanUtil.copyToList(addresses, AddressVO.class);
+        Map<Long, List<AddressVO>> addressMap = addressVOList.stream()
+                .collect(Collectors.groupingBy(AddressVO::getUserId));
+        for (UserVO vo : vos) {
+            vo.setAddresses(addressMap.getOrDefault(vo.getId(), List.of()));
+        }
+        return vos;
     }
 
     /**

@@ -17,7 +17,7 @@
 | POST | `/users` | 新增用户，body 为 `UserFormDTO`，返回 `R.ok()` |
 | DELETE | `/users/{id}` | 按 id 删除用户，返回 `R.ok()` |
 | GET | `/users/{id}` | 按 id 查询用户（含收货地址列表），返回 `R.ok(UserVO)` |
-| GET | `/users?ids=` | 按 id 列表批量查询，返回 `R.ok(List<UserVO>)` |
+| GET | `/users?ids=` | 按 id 列表批量查询（含各自收货地址），返回 `R.ok(List<UserVO>)` |
 | PUT | `/users/balance/deduct?ids=&amount=` | 批量扣减余额（自定义 SQL） |
 | PUT | `/users/{id}/deduction/{money}` | 按单个用户 id 扣减余额（自定义 SQL） |
 | GET | `/users/by-address?city=&ids=` | 按城市+用户 id 关联 address 查询（自定义 SQL） |
